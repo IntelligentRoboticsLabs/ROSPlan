@@ -13,11 +13,11 @@ Get the prerequisites:
 
 (for Kinetic)
 ```sh
-sudo apt-get install flex ros-kinetic-move-base-msgs ros-kinetic-mongodb-store ros-kinetic-tf2-bullet freeglut3-dev python-catkin-tools
+sudo apt-get install flex ros-kinetic-move-base-msgs ros-kinetic-tf2-bullet freeglut3-dev python-catkin-tools
 ```
 (for Indigo)
 ```sh
-sudo apt-get install flex ros-indigo-mongodb-store ros-indigo-tf2-bullet freeglut3-dev python-catkin-tools
+sudo apt-get install flex ros-indigo-tf2-bullet freeglut3-dev python-catkin-tools
 ```
 Select a catkin workspace or create a new one:
 ```sh
@@ -96,7 +96,7 @@ KCL: (/rosplan_plan_dispatcher) Feedback received [0, action enabled]
 
 ### Related repositories:
 
-Automatic localisation and docking action interfaces with the Turtlebot 2 (Kobuki base) 
+Automatic localisation and docking action interfaces with the Turtlebot 2 (Kobuki base)
 https://github.com/KCL-Planning/ROSPlan_interface_Turtlebot2
 
 Integration with the Component Oriented Layered-base Architecture for Autonomy (COLA2). Developed in the Research Center of Underwater Robotics (CIRS) in the University of Girona (UdG). This architecture is used to control the Autonomous Underwater Vehicles (AUVs) developed in this center. (https://bitbucket.org/udg_cirs/cola2)

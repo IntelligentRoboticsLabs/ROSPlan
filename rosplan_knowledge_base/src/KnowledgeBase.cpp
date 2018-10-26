@@ -54,7 +54,7 @@ namespace KCL_rosplan {
 					present = (sit!=model_instances[iit->instance_type].end());
 				}
 				break;
-				
+
 			case rosplan_knowledge_msgs::KnowledgeItem::FUNCTION:
 				{
 					// check if function exists and has the correct value
@@ -250,7 +250,7 @@ namespace KCL_rosplan {
 				if(name.compare(msg.instance_name)==0 || msg.instance_name.compare("")==0) {
 					// remove instance from knowledge base
 					ROS_INFO("KCL: (%s) Removing instance (%s, %s)",
-							ros::this_node::getName().c_str(), 
+							ros::this_node::getName().c_str(),
 							msg.instance_type.c_str(),
 							(msg.instance_name.compare("")==0) ? "ALL" : msg.instance_name.c_str());
 					iit = model_instances[msg.instance_type].erase(iit);
@@ -339,7 +339,7 @@ namespace KCL_rosplan {
 	 * add an instance, fact, or function to the knowledge base
 	 */
 	void KnowledgeBase::addKnowledge(rosplan_knowledge_msgs::KnowledgeItem &msg) {
-		
+
 		switch(msg.knowledge_type) {
 
 		case rosplan_knowledge_msgs::KnowledgeItem::INSTANCE:
@@ -424,7 +424,7 @@ namespace KCL_rosplan {
 				return;
 			}
 		}
-		
+
 		// add goal
 		ROS_INFO("KCL: (%s) Adding mission goal (%s%s)", ros::this_node::getName().c_str(), msg.attribute_name.c_str(), param_str.c_str());
 		model_goals.push_back(msg);
@@ -443,7 +443,7 @@ namespace KCL_rosplan {
 	/*----------------*/
 
 	bool KnowledgeBase::getInstances(rosplan_knowledge_msgs::GetInstanceService::Request  &req, rosplan_knowledge_msgs::GetInstanceService::Response &res) {
-	
+
 		// fetch the instances of the correct type
 		if(""==req.type_name) {
 			std::map<std::string,std::vector<std::string> >::iterator iit;
@@ -540,7 +540,7 @@ namespace KCL_rosplan {
 			}
 		}
 		return true;
-	}		
+	}
 
 	/* get domain predicates */
 	bool KnowledgeBase::getPredicates(rosplan_knowledge_msgs::GetDomainAttributeService::Request  &req, rosplan_knowledge_msgs::GetDomainAttributeService::Response &res) {
@@ -598,7 +598,7 @@ namespace KCL_rosplan {
 	bool KnowledgeBase::getOperators(rosplan_knowledge_msgs::GetDomainOperatorService::Request  &req, rosplan_knowledge_msgs::GetDomainOperatorService::Response &res) {
 
 		VAL::operator_list* operators = domain_parser.domain->ops;
-		for (VAL::operator_list::const_iterator ci = operators->begin(); ci != operators->end(); ci++) {			
+		for (VAL::operator_list::const_iterator ci = operators->begin(); ci != operators->end(); ci++) {
 			const VAL::operator_* op = *ci;
 
 			// name
@@ -623,7 +623,7 @@ namespace KCL_rosplan {
 	bool KnowledgeBase::getOperatorDetails(rosplan_knowledge_msgs::GetDomainOperatorDetailsService::Request  &req, rosplan_knowledge_msgs::GetDomainOperatorDetailsService::Response &res) {
 		VALVisitorOperator op_visitor;
 		VAL::operator_list* operators = domain_parser.domain->ops;
-		for (VAL::operator_list::const_iterator ci = operators->begin(); ci != operators->end(); ci++) {			
+		for (VAL::operator_list::const_iterator ci = operators->begin(); ci != operators->end(); ci++) {
 			if((*ci)->name->symbol::getName() == req.name) {
 				op_visitor.visit_operator_(*ci);
 				res.op = op_visitor.msg;
@@ -637,7 +637,7 @@ namespace KCL_rosplan {
 	bool KnowledgeBase::getPredicateDetails(rosplan_knowledge_msgs::GetDomainPredicateDetailsService::Request  &req, rosplan_knowledge_msgs::GetDomainPredicateDetailsService::Response &res) {
 		VALVisitorPredicate pred_visitor;
 		VAL::pred_decl_list* predicates = domain_parser.domain->predicates;
-		for (VAL::pred_decl_list::const_iterator ci = predicates->begin(); ci != predicates->end(); ci++) {			
+		for (VAL::pred_decl_list::const_iterator ci = predicates->begin(); ci != predicates->end(); ci++) {
 			if((*ci)->getPred()->symbol::getName() == req.name) {
 				pred_visitor.visit_pred_decl(*ci);
 				res.predicate = pred_visitor.msg;
@@ -750,14 +750,8 @@ int main(int argc, char **argv)
 	ros::ServiceServer stateServer5 = n.advertiseService("state/goals",				&KCL_rosplan::KnowledgeBase::getGoals, &kb);
 	ros::ServiceServer stateServer6 = n.advertiseService("state/metric",			&KCL_rosplan::KnowledgeBase::getMetric, &kb);
 
-	// wait for and clear mongoDB
-	ROS_INFO("KCL: (%s) Waiting for MongoDB", ros::this_node::getName().c_str());
-	ros::service::waitForService("/message_store/delete",-1);
-	system("mongo message_store --eval \"printjson(db.message_store.remove())\"");
-
 	ROS_INFO("KCL: (%s) Ready to receive", ros::this_node::getName().c_str());
 	kb.runKnowledgeBase();
 
 	return 0;
 }
-

@@ -3,6 +3,72 @@
 /* The implementation of RPMoveBase.h */
 namespace KCL_rosplan {
 
+  /*
+  bool RPActionInterface::checkConditions(const std::vector<rosplan_knowledge_msgs::DomainFormula>& df,
+                                          const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg, bool positive)
+  {
+    // ROS_INFO("check conditions");
+    bool ret = true;
+    std::vector<rosplan_knowledge_msgs::DomainFormula>::const_iterator pit;
+    for (pit = df.begin(); pit != df.end(); pit++)
+    {
+      rosplan_knowledge_msgs::KnowledgeItem req_ki;
+      req_ki.knowledge_type = rosplan_knowledge_msgs::KnowledgeItem::FACT;
+      req_ki.attribute_name = pit->name;
+      req_ki.is_negative = !positive;
+
+      // ROS_INFO("[%s]", pit->name.c_str());
+
+      int c = 0;
+      std::vector<diagnostic_msgs::KeyValue>::const_iterator it_op;
+      for (it_op = pit->typed_parameters.begin(); it_op != pit->typed_parameters.end(); ++it_op)
+      {
+        req_ki.instance_type = it_op->value;
+        std::vector<diagnostic_msgs::KeyValue>::const_iterator it_msg;
+        for (it_msg = msg->parameters.begin(); it_msg != msg->parameters.end(); ++it_msg)
+        {
+          if (it_msg->key == it_op->key)
+          {
+            diagnostic_msgs::KeyValue kv;
+
+            rosplan_knowledge_msgs::DomainFormula f = predicates[pit->name];
+            std::vector<diagnostic_msgs::KeyValue>::const_iterator it_pred;
+            for (it_pred = f.typed_parameters.begin(); it_pred != f.typed_parameters.end(); ++it_pred)
+            {
+              if (it_op->value == it_pred->value)
+                kv.key = predicate_args_[req_ki.attribute_name][c].first;
+            }
+            kv.value = it_msg->value;
+            req_ki.values.push_back(kv);
+          }
+        }
+        c++;
+      }
+
+      rosplan_knowledge_msgs::KnowledgeQueryService query;
+      query.request.knowledge.push_back(req_ki);
+
+      if (query_knowledge_client.call(query))
+        ret = ret && query.response.all_true;
+    }
+
+    return ret;
+  }
+
+  bool RPActionInterface::checkAtStartConditions(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg)
+  {
+    return checkConditions(op.at_start_simple_condition, msg) && checkConditions(op.at_start_neg_condition, msg, false);
+  }
+
+  bool RPActionInterface::checkAtEndConditions(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg)
+  {
+    return checkConditions(op.at_end_simple_condition, msg) && checkConditions(op.at_end_neg_condition, msg, false);
+  }
+  bool RPActionInterface::checkOverAllConditions(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg)
+  {
+    return checkConditions(op.over_all_simple_condition, msg) && checkConditions(op.over_all_neg_condition, msg, false);
+  }*/
+
 	/* run action interface */
 	void RPActionInterface::runActionInterface() {
 
@@ -166,7 +232,7 @@ namespace KCL_rosplan {
 		{
 			// update knowledge base
 			rosplan_knowledge_msgs::KnowledgeUpdateServiceArray updatePredSrv;
-			
+
 			// simple START del effects
 			for(int i=0; i<op.at_start_del_effects.size(); i++) {
 				rosplan_knowledge_msgs::KnowledgeItem item;

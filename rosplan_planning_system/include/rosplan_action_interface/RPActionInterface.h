@@ -29,6 +29,12 @@ namespace KCL_rosplan {
 
 	protected:
 
+    bool checkConditions(const std::vector<rosplan_knowledge_msgs::DomainFormula>& df,
+                         const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg, bool positive = true);
+    bool checkAtStartConditions(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+    bool checkAtEndConditions(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+    bool checkOverAllConditions(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
+
 		/* PDDL info and publisher */
 		std::map<std::string, rosplan_knowledge_msgs::DomainFormula> predicates;
 		rosplan_knowledge_msgs::DomainFormula params;
@@ -44,6 +50,8 @@ namespace KCL_rosplan {
 		/* action status */
 		bool action_success;
 
+    std::map<std::string, std::vector<std::pair<std::string, std::string> > > predicate_args_;
+
 	public:
 
 		/* main loop for action interface */
@@ -51,7 +59,7 @@ namespace KCL_rosplan {
 
 		/* listen to and process action_dispatch topic */
 		void dispatchCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg);
-		
+
 		/* perform or call real action implementation */
 		virtual bool concreteCallback(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg) =0;
 	};
