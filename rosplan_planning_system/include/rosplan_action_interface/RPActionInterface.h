@@ -9,6 +9,7 @@
 #include "rosplan_knowledge_msgs/KnowledgeUpdateServiceArray.h"
 #include "rosplan_knowledge_msgs/GetDomainOperatorDetailsService.h"
 #include "rosplan_knowledge_msgs/GetDomainPredicateDetailsService.h"
+#include "rosplan_knowledge_msgs/KnowledgeQueryService.h"
 #include "diagnostic_msgs/KeyValue.h"
 
 #ifndef KCL_action_interface
@@ -45,7 +46,7 @@ namespace KCL_rosplan {
 		ros::Publisher action_feedback_pub;
 
 		/* service handle to PDDL knowledge base */
-		ros::ServiceClient update_knowledge_client;
+		ros::ServiceClient update_knowledge_client, query_knowledge_client;
 
 		/* action status */
 		bool action_success;

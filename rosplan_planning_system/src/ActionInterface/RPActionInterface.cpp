@@ -3,7 +3,7 @@
 /* The implementation of RPMoveBase.h */
 namespace KCL_rosplan {
 
-  /*
+
   bool RPActionInterface::checkConditions(const std::vector<rosplan_knowledge_msgs::DomainFormula>& df,
                                           const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg, bool positive)
   {
@@ -67,7 +67,7 @@ namespace KCL_rosplan {
   bool RPActionInterface::checkOverAllConditions(const rosplan_dispatch_msgs::ActionDispatch::ConstPtr& msg)
   {
     return checkConditions(op.over_all_simple_condition, msg) && checkConditions(op.over_all_neg_condition, msg, false);
-  }*/
+  }
 
 	/* run action interface */
 	void RPActionInterface::runActionInterface() {
@@ -176,6 +176,9 @@ namespace KCL_rosplan {
 		ss << "/" << kb << "/update_array";
 		update_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateServiceArray>(ss.str());
 
+    ss.str("");
+		ss << "/" << kb << "/query_state";
+    query_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeQueryService>("/kcl_rosplan/query_knowledge_base");
 		// listen for action dispatch
 		std::string adt = "default_dispatch_topic";
 		nh.getParam("action_dispatch_topic", adt);
