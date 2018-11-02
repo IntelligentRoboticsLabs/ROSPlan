@@ -4,11 +4,13 @@ import os
 import rospy
 import rospkg
 import sys
+import thread
 
 from itertools import product
 from string import join, split
 
 from std_msgs.msg import *
+from std_srvs.srv import Empty
 from diagnostic_msgs.msg import KeyValue
 from rosplan_dispatch_msgs.msg import *
 from rosplan_knowledge_msgs.srv import *
@@ -107,10 +109,15 @@ class PlanViewWidget(QWidget):
         self._timer_refresh_goals = QTimer(self)
         self._timer_refresh_goals.timeout.connect(self.refresh_model)
 
-        rospy.Subscriber("/kcl_rosplan/plan", CompletePlan, self.plan_callback)
-        rospy.Subscriber("/kcl_rosplan/action_feedback", ActionFeedback, self.action_feedback_callback)
-        rospy.Subscriber("/kcl_rosplan/system_state", String, self.system_status_callback)
-        self._plan_pub = rospy.Publisher('/kcl_rosplan/planning_commands', String, queue_size=10)
+        rospy.Subscriber("/rosplan_parsing_interface/complete_plan", EsterelPlan, self.plan_callback)
+        rospy.Subscriber("/rosplan_plan_dispatcher/action_feedback", ActionFeedback, self.action_feedback_callback)
+        # rospy.Subscriber("/kcl_rosplan/system_state", String, self.system_status_callback)
+        # self._plan_pub = rospy.Publisher('/kcl_rosplan/planning_commands', String, queue_size=10)
+
+        self._problem_generator_client = rospy.ServiceProxy('rosplan_problem_interface/problem_generation_server', Empty)
+        self._planning_server_state_client = rospy.ServiceProxy('rosplan_planner_interface/planning_server', Empty)
+        self._plan_parser_client = rospy.ServiceProxy('rosplan_parsing_interface/parse_plan', Empty)
+        self._plan_dispatcher_client = rospy.ServiceProxy('rosplan_plan_dispatcher/dispatch_plan', Empty)
 
         self.refresh_model()
 
@@ -221,13 +228,19 @@ class PlanViewWidget(QWidget):
             item.setText(self._column_index['action_name'], action_name +')')
             if str(action.action_id) in expanded_list:
                 item.setExpanded(True)
+    def plan_distpacher(self):
+        self._plan_dispatcher_client()
 
     """
     called when the plan button is clicked; sends a planning request
     """
     def _handle_plan_clicked(self, checked):
         self._status_list.clear()
-        self._plan_pub.publish('plan')
+        #self._plan_pub.publish('plan')
+        self._problem_generator_client()
+        self._planning_server_state_client()
+        self._plan_parser_client()
+        thread.start_new_thread(self.plan_distpacher, ())
 
     """
     called when the plan button is clicked; sends a planning request
@@ -244,10 +257,13 @@ class PlanViewWidget(QWidget):
         self._plan_pub.publish('cancel')
 
     """
-    callback for complete_plan
+    callback for complete_plan (EsterelPlan)
     """
     def plan_callback(self, data):
-        self._action_list = data.plan
+        self._action_list = []
+        for node in data.nodes:
+            if node.node_type == 0:
+                self._action_list.append(node.action)
 
     """
     callback for action_feedback
@@ -356,7 +372,7 @@ class PlanViewWidget(QWidget):
 
     """
     Qt methods
-    """ 
+    """
     def shutdown_plugin(self):
         pass
 
