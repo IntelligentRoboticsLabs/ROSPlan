@@ -683,7 +683,15 @@ int main(int argc, char **argv)
 	n.param("domain_path", domainPath, domainPath);
 	n.param("problem_path", problemPath, problemPath);
 
-
+  sleep(3);
+  bool success = false;
+  do
+  {
+    ROS_INFO("Checking for domain file [%s]...", domainPath.c_str());
+    std::ifstream f(domainPath.c_str());
+    success = f.good();
+    sleep(1);
+  } while (!success);
 	KCL_rosplan::KnowledgeBase kb;
 	std::ifstream file_check;
 
