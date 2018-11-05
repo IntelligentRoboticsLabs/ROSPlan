@@ -31,7 +31,10 @@ namespace KCL_rosplan {
 					  ros::this_node::getName().c_str());
 			ros::shutdown();
 		}
-
+    ROS_INFO("KCL: Cleanning problem file [%s]", problem_path.c_str());
+    std::ofstream ofs;
+    ofs.open(problem_path , std::ofstream::out | std::ofstream::trunc);
+    ofs.close();
 		KCL_rosplan::ProblemGeneratorFactory::ProbGen pg_type;
 
 		if (not planning_lang.empty()) {
@@ -60,7 +63,7 @@ namespace KCL_rosplan {
 		node_handle->getParam("problem_topic", problem_instance);
 		problem_publisher = node_handle->advertise<std_msgs::String>(problem_instance, 1, true);
 	}
-	
+
 	ProblemInterface::~ProblemInterface()
 	{
 
@@ -71,7 +74,7 @@ namespace KCL_rosplan {
 	/*--------------------*/
 
 	/**
-	 * problem generation service method (1) 
+	 * problem generation service method (1)
 	 * loads parameters from param server
 	 */
 	bool ProblemInterface::runProblemServerDefault(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
@@ -87,7 +90,7 @@ namespace KCL_rosplan {
 	}
 
 	/**
-	 * problem generation service method (2) 
+	 * problem generation service method (2)
 	 * loads parameters from service request
 	 */
 	bool ProblemInterface::runProblemServerParams(rosplan_dispatch_msgs::ProblemService::Request &req, rosplan_dispatch_msgs::ProblemService::Response &res) {
@@ -99,7 +102,7 @@ namespace KCL_rosplan {
 		}
 		return success;
 	}
-	
+
 	/**
 	 * planning system; prepares planning; calls planner; parses plan.
 	 */
@@ -109,7 +112,7 @@ namespace KCL_rosplan {
 
 		// save parameter
 		problem_path = problemPath;
-		
+
 		// set problem name for ROS_INFO
 		std::size_t lastDivide = problem_path.find_last_of("/\\");
 		if(lastDivide != std::string::npos) {
@@ -146,7 +149,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh("~");
 
 		KCL_rosplan::ProblemInterface ProblemInterface(nh);
-		
+
 		// start the planning services
 		ros::ServiceServer service1 = nh.advertiseService("problem_generation_server", &KCL_rosplan::ProblemInterface::runProblemServerDefault, &ProblemInterface);
 		ros::ServiceServer service2 = nh.advertiseService("problem_generation_server_params", &KCL_rosplan::ProblemInterface::runProblemServerParams, &ProblemInterface);
