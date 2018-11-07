@@ -41,8 +41,8 @@ find_package(FLEX REQUIRED)
 add_definitions(-Wno-deprecated-declarations)
 
 ## visualisation
-find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
+#find_package(OpenGL REQUIRED)
+#find_package(GLUT REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
 
 ## Declare cpp executables
