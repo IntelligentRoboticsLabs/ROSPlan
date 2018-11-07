@@ -106,24 +106,41 @@ class PlanViewWidget(QWidget):
         # init and start update timers
         self._timer_refresh_plan = QTimer(self)
         self._timer_refresh_plan.timeout.connect(self.refresh_plan)
+        self._timer_refresh_functions = QTimer(self)
+        self._timer_refresh_functions.timeout.connect(self.refresh_functions)
         self._timer_refresh_goals = QTimer(self)
         self._timer_refresh_goals.timeout.connect(self.refresh_model)
 
         rospy.Subscriber("/rosplan_parsing_interface/complete_plan", EsterelPlan, self.plan_callback)
         rospy.Subscriber("/rosplan_plan_dispatcher/action_feedback", ActionFeedback, self.action_feedback_callback)
-        # rospy.Subscriber("/kcl_rosplan/system_state", String, self.system_status_callback)
-        # self._plan_pub = rospy.Publisher('/kcl_rosplan/planning_commands', String, queue_size=10)
 
         self._problem_generator_client = rospy.ServiceProxy('rosplan_problem_interface/problem_generation_server', Empty)
         self._planning_server_state_client = rospy.ServiceProxy('rosplan_planner_interface/planning_server', Empty)
         self._plan_parser_client = rospy.ServiceProxy('rosplan_parsing_interface/parse_plan', Empty)
         self._plan_dispatcher_client = rospy.ServiceProxy('rosplan_plan_dispatcher/dispatch_plan', Empty)
+        self._kb_functions_client = rospy.ServiceProxy('rosplan_knowledge_base/state/functions', GetAttributeService)
 
         self.refresh_model()
 
     def start(self):
         self._timer_refresh_plan.start(1000)
         self._timer_refresh_goals.start(10000)
+        self._timer_refresh_functions.start(1000)
+
+    def refresh_functions(self):
+        expanded_list = []
+        rospy.wait_for_service('rosplan_knowledge_base/state/functions')
+        function_list = rospy.ServiceProxy('rosplan_knowledge_base/state/functions', GetAttributeService)
+        resp = function_list('')
+        self.functionView.clear()
+        for function in resp.attributes:
+            item = QListWidgetItem(self.functionView)
+            functionText  = '(' + function.attribute_name
+            for keyval in function.values:
+                 functionText = functionText + ' ' + keyval.value
+            functionText = functionText + ' ' + str(function.function_value)
+            functionText = functionText + ')'
+            item.setText(functionText)
 
     """
     updating goal and model view
