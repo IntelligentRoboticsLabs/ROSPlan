@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- arguments -->
+	<arg name="node_name"            default="rosplan_planner_interface" />
+	<arg name="use_problem_topic"    default="true" />
+	<arg name="problem_topic"        default="/rosplan_problem_interface/problem_instance" />
+	<arg name="planner_topic"        default="planner_output" />
+	<arg name="domain_path"          default="/tmp"/>
+	<arg name="problem_path"         default="/tmp" />
+	<arg name="data_path"            default="/tmp"/>
+	<arg name="planner_command"      default="timeout 10 $(find rosplan_planning_system)/common/bin/popf $(arg domain_path) $(arg problem_path)" />
+	<arg name="planner_interface"    default="probprp_planner_interface" />
+
+
+
+  <param name="problem_file" value="$(find xdot)/resources/PDDL/problem.pddl" />
+  <param name="prefVizType" value=".pre" />
+  <param name="domain_file" value="$(find xdot)/resources/PDDL/domain.pddl" />
+  <param name="domainfo_file" value="$(find xdot)/resources/PDDL/domainfo.pddl"/>
+  <param name="planner_path" value="$(find xdot)/planner/proprp/src"/>
+  <param name="script_path" value="$(find xdot)/planner/proprp/prp-scripts"/>
+  <param name="translator_file" value="$(find xdot)/planner/proprp/prp-scripts/translate_policy.py"/>
+  <param name="validator_file" value="$(find xdot)/planner/proprp/prp-scripts/validator.py"/>
+  <param name="policy_file" value="$(find xdot)/planner/proprp/prp-scripts/human_policy.pol"/>
+  <param name="execution_files_path" value="$(find xdot)/resources/ExecutionINFO"/>
+  <!-- to run the planner -->
+  <param name="planner_command" value="(cd $(arg planner_path) ; ./prp $(arg domain_file) $(arg problem_file) --dump-policy 2 --final-fsap-free-round 1 --optimized-scd 1)" />
+  <param name="translator_command" value="(cd $(arg planner_path) ; python $(arg translator_file) > $(arg policy_file))" />
+  <param name="preprograph_command" value="(cd $(arg execution_files_path) ; SCRIPTS/preProcessGraph.py graph.dot graph.pre)" />
+  <param name="validator_command" value="(cd $(arg execution_files_path) ; python $(arg validator_file) $(arg domainfo_file) $(arg problem_file) $(arg policy_file)
+  prp)" />
+
+
+
+
+
+
+
+
+	<!-- planner interface -->
+	<node name="$(arg node_name)" pkg="rosplan_planning_system" type="$(arg planner_interface)" respawn="false" output="screen">
+
+		<!-- general options -->
+		<param name="use_problem_topic" value="$(arg use_problem_topic)" />
+
+		<!-- ros topics -->
+		<param name="problem_topic" value="$(arg problem_topic)" />
+		<param name="planner_topic" value="$(arg planner_topic)" />
+
+		<!-- directory for files -->
+		<param name="domain_path" value="$(arg domain_path)" />
+		<param name="problem_path" value="$(arg problem_path)" />
+		<param name="data_path" value="$(arg data_path)" />
+
+		<!-- to run the planner -->
+		<param name="planner_command" value="$(arg planner_command)" />
+	</node>
+
+</launch>

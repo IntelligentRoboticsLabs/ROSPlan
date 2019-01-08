@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   diagnostic_msgs
   rosplan_dispatch_msgs
   rosplan_knowledge_msgs
+  roslint
 )
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -35,6 +36,9 @@ catkin_package(
 include_directories(include)
 include_directories(${catkin_INCLUDE_DIRS})
 
+set(ROSLINT_CPP_OPTS "--filter=-build/header_guard,-runtime/references")
+roslint_cpp()
+
 find_package(FLEX REQUIRED)
 
 # Disable deprecated declarations warning (about std::auto_ptr)
@@ -51,6 +55,7 @@ add_executable(problemInterface src/ProblemGeneration/ProblemInterface.cpp src/P
                                                                            src/ProblemGeneration/RDDLProblemGenerator.cpp
                                                                            src/ProblemGeneration/ProblemGeneratorFactory.cpp)
 add_executable(popf_planner_interface src/PlannerInterface/POPFPlannerInterface.cpp src/PlannerInterface/PlannerInterface.cpp)
+add_executable(probprp_planner_interface src/PlannerInterface/PROBPRPPlannerInterface.cpp src/PlannerInterface/PlannerInterface.cpp)
 add_executable(ff_planner_interface src/PlannerInterface/FFPlannerInterface.cpp src/PlannerInterface/PlannerInterface.cpp)
 add_executable(metricff_planner_interface src/PlannerInterface/FFPlannerInterface.cpp src/PlannerInterface/PlannerInterface.cpp)
 add_executable(smt_planner_interface src/PlannerInterface/SMTPlannerInterface.cpp src/PlannerInterface/PlannerInterface.cpp)
@@ -68,6 +73,7 @@ add_executable(simulatedAction src/ActionInterface/RPSimulatedActionInterface.cp
 ## Add dependencies
 add_dependencies(problemInterface ${catkin_EXPORTED_TARGETS})
 add_dependencies(popf_planner_interface ${catkin_EXPORTED_TARGETS})
+add_dependencies(probprp_planner_interface ${catkin_EXPORTED_TARGETS})
 add_dependencies(ff_planner_interface ${catkin_EXPORTED_TARGETS})
 add_dependencies(metricff_planner_interface ${catkin_EXPORTED_TARGETS})
 add_dependencies(smt_planner_interface ${catkin_EXPORTED_TARGETS})
@@ -85,6 +91,7 @@ add_dependencies(simulatedAction ${catkin_EXPORTED_TARGETS})
 ## Specify libraries against which to link a library or executable target
 target_link_libraries(problemInterface ${catkin_LIBRARIES})
 target_link_libraries(popf_planner_interface ${catkin_LIBRARIES})
+target_link_libraries(probprp_planner_interface ${catkin_LIBRARIES})
 target_link_libraries(ff_planner_interface ${catkin_LIBRARIES})
 target_link_libraries(metricff_planner_interface ${catkin_LIBRARIES})
 target_link_libraries(smt_planner_interface ${catkin_LIBRARIES})
@@ -135,4 +142,3 @@ file(GLOB COMMON_BINS common/bin/*)
 install(PROGRAMS ${COMMON_BINS}
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/common/bin
 )
-
