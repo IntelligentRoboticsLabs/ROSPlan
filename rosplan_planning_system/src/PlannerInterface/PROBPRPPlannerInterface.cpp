@@ -41,6 +41,12 @@ namespace KCL_rosplan
     // TO DO: Igual es mejor mandar por aqui un plan y además publicar el nuevo mensaje en otro topic
     plan_publisher = node_handle->advertise<std_msgs::String>(plannerTopic, 1, true);
     graphfile_pub = node_handle->advertise<std_msgs::String>("/setGraphFile", 10);
+    state_id_pub = node_handle->advertise<rosplan_planning_msgs::KeyValueIntStrMap>("/probprp/state_id", 1, true);
+    state_policy_pub = node_handle->advertise<rosplan_planning_msgs::KeyValueIntStrMap>("/probprp/state_policy", 1, true);
+    state_outcome_size_pub = node_handle->advertise<rosplan_planning_msgs::KeyValueIntIntMap>("/probprp/state_outcome_size", 1, true);
+    state_outcome_pub = node_handle->advertise<rosplan_planning_msgs::StateOutcomeMap>("/probprp/state_outcome", 1, true);
+    state_outcome_list_pub = node_handle->advertise<rosplan_planning_msgs::StateOutcomeListMap>("/probprp/state_outcome_list", 1, true);
+
     loadParams();
     activeStateName = "";
     // start planning action server
@@ -258,6 +264,82 @@ namespace KCL_rosplan
     return data;
   }
 
+  rosplan_planning_msgs::KeyValueIntStrMap
+    PROBPRPPlannerInterface::buildIntStrMapMsg(std::map<int,std::string> map)
+  {
+    rosplan_planning_msgs::KeyValueIntStrMap output_msg;
+    std::vector<rosplan_planning_msgs::KeyValueIntStr> list;
+    for (std::map<int,std::string>::iterator it=map.begin(); it!=map.end(); ++it)
+    {
+      rosplan_planning_msgs::KeyValueIntStr msg;
+      msg.key = it->first;
+      msg.value = it->second;
+      list.push_back(msg);
+    }
+    output_msg.map = list;
+    return output_msg;
+  }
+
+  rosplan_planning_msgs::KeyValueIntIntMap
+    PROBPRPPlannerInterface::buildIntIntMapMsg(std::map<int,int> map)
+  {
+    rosplan_planning_msgs::KeyValueIntIntMap output_msg;
+    std::vector<rosplan_planning_msgs::KeyValueIntInt> list;
+    for (std::map<int,int>::iterator it=map.begin(); it!=map.end(); ++it)
+    {
+      rosplan_planning_msgs::KeyValueIntInt msg;
+      msg.key = it->first;
+      msg.value = it->second;
+      list.push_back(msg);
+    }
+    output_msg.map = list;
+    return output_msg;
+  }
+
+  rosplan_planning_msgs::StateOutcomeMap
+    PROBPRPPlannerInterface::buildStateOutcomeMapMsg(std::map<std::pair <int, std::string>, int> map)
+  {
+    rosplan_planning_msgs::StateOutcomeMap output_msg;
+    std::vector<rosplan_planning_msgs::StateOutcome> list;
+    for (std::map<std::pair <int, std::string>, int>::iterator it=map.begin(); it!=map.end(); ++it)
+    {
+      rosplan_planning_msgs::StateOutcome msg;
+      rosplan_planning_msgs::KeyValueIntStr pair;
+      pair.key = it->first.first;
+      pair.value = it->first.second;
+      msg.key = pair;
+      msg.value = it->second;
+      list.push_back(msg);
+    }
+    output_msg.map = list;
+    return output_msg;
+  }
+
+  rosplan_planning_msgs::StateOutcomeListMap
+    PROBPRPPlannerInterface::buildStateOutcomeListMapMsg(std::map<int, std::vector<std::string>> map)
+  {
+    rosplan_planning_msgs::StateOutcomeListMap output_msg;
+    std::vector<rosplan_planning_msgs::StateOutcomeList> list;
+    for (std::map<int, std::vector<std::string>>::iterator it=map.begin(); it!=map.end(); ++it)
+    {
+      rosplan_planning_msgs::StateOutcomeList msg;
+      msg.key = it->first;
+      msg.value = it->second;
+      list.push_back(msg);
+    }
+    output_msg.map = list;
+    return output_msg;
+  }
+
+  void PROBPRPPlannerInterface::pubPlanMsgs()
+  {
+    state_id_pub.publish(buildIntStrMapMsg(stateIDname));
+    state_policy_pub.publish(buildIntStrMapMsg(statePolicy));
+    state_outcome_size_pub.publish(buildIntIntMapMsg(stateOutcomeSize));
+    state_outcome_pub.publish(buildStateOutcomeMapMsg(stateOutcome));
+    state_outcome_list_pub.publish(buildStateOutcomeListMapMsg(stateOutcomeList));
+  }
+
   /*------------------*/
   /* Plan and process */
   /*------------------*/
@@ -296,6 +378,7 @@ namespace KCL_rosplan
     }
     ros::Duration(0.5).sleep();
     parsePlan();
+    pubPlanMsgs();
     // initialDispatch();
     ros::Duration(0.5).sleep();
     // res.success=true;
@@ -391,162 +474,7 @@ string getGraphFile(std::string viz_type){
         return graphFile.str();
     }
 
-void parsePlan(){
-        stateIDname.clear();
-        statePolicy.clear();
-        stateOutcomeSize.clear();
-        stateOutcome.clear();
-        stateOutcomeList.clear();
-        actionServerStatus = "Active";
-        ROS_INFO("Parsing DOT\n");
-        // load plan file
-        std::ifstream infile(getGraphFile(".dot").c_str());
-        std::string line;
-        char name[100][50];
-        std::vector<std::string> s;
-        int curr,next,nodeCount;
-        int stateCount=0;
-        bool planFound = false;
-        bool planRead = false;
-        std::getline(infile, line);
-        std::getline(infile, line);
-        while(!infile.eof()) {
-
-            std::getline(infile, line);
-            line.erase (std::remove(line.begin(), line.end(),' '), line.end());
-            line.erase (std::remove(line.begin(), line.end(),'\t'), line.end());
-            int maxindex=0;
-            if(line.length()>0){
-                if(line.find("->")!= std::string::npos){
-                    int stateIndexFROM =-1;
-                    int stateIndexTO =-1;
-                    string stateIndexFROMstr;
-                    string stateIndexTOstr;
-                    int switchstate =0;
-                    int count_start = 0;
-                    int count_length=0;
-                    for(std::string::iterator it = line.begin(); it != line.end(); ++it) {
-                        switch (switchstate) {
-                        case 0:
-                            if (*it == '-') {
-                                stateIndexFROMstr = line.substr(0,count_length).c_str();
-                                stateIndexFROM = std::atoi (line.substr(0,count_length).c_str());
-                                switchstate++;
-                            }
-                            count_length++;
-                            break;
-                        case 1:
-                            if (*it == '>') {
-                                count_start = count_length+1;
-                                count_length=0;
-                                switchstate++;
-                            }
-                            count_length++;
-                            break;
-
-                        case 2:
-                            if (*it == '[') {
-                                stateIndexTOstr = line.substr(count_start,count_length-1).c_str();
-                                stateIndexTO = std::atoi (line.substr(count_start,count_length-1).c_str());
-                            }
-                            count_length++;
-                            break;
-                        }
-
-                    }
-                    std::getline(infile, line);
-                    line.erase (std::remove(line.begin(), line.end(),' '), line.end());
-                    line.erase (std::remove(line.begin(), line.end(),'\t'), line.end());
-                    switchstate=0;
-                    count_start = 0;
-                    count_length=0;
-                    string actionName,outcomeName;
-                    for(std::string::iterator it = line.begin(); it != line.end(); ++it) {
-                        switch (switchstate) {
-                        case 0:
-                            if (*it == '"') {
-                                switchstate++;
-                                count_start = count_length+1;
-                                count_length=0;
-                            }
-                            count_length++;
-                            break;
-                        case 1:
-                            if (*it == '[') {
-                                actionName = line.substr(count_start,count_length-1).c_str();
-                                switchstate++;
-                                count_start = count_start+count_length;
-                                count_length=0;
-                            }
-                            count_length++;
-                            break;
-                        case 2:
-                            if (*it == '"') {
-                                outcomeName = line.substr(count_start-1,count_length).c_str();
-                            }
-                            count_length++;
-
-                            break;
-                        }
-
-                    }
-                    statePolicy[stateIndexFROM]=actionName;
-                    if ( stateOutcomeSize.find(stateIndexFROM) == stateOutcomeSize.end() ) {
-                        // not found
-                        stateOutcomeSize[stateIndexFROM]=1;
-                    } else {
-                        // found
-                        stateOutcomeSize[stateIndexFROM]+=1;
-                    }
-                    stateOutcome[pair<int,string>(stateIndexFROM,outcomeName)]=stateIndexTO;
-                    stateOutcomeList[stateIndexFROM].push_back(outcomeName);
-                }
-                else if(line.find("}")!= std::string::npos){}
-                else if(line.find("=\"")!= std::string::npos){}
-                else{
-
-                    int stateIndex =0;
-                    int switchstate =0;
-                    int count_start = 0;
-                    int count_length=0;
-                    std::string stateName;
-                    for(std::string::iterator it = line.begin(); it != line.end(); ++it) {
-                        switch (switchstate) {
-                        case 0:
-                            if (*it == '[') {
-                                stateIndex = std::atoi (line.substr(0,count_length).c_str());
-                                switchstate++;
-                            }
-                            count_length++;
-                            break;
-                        case 1:
-                            if (*it == '=') {
-                                count_start = count_length+1;
-                                count_length=0;
-                                switchstate++;
-                            }
-                            count_length++;
-                            break;
-
-                        case 2:
-                            if (*it == ']') {
-                                stateName = line.substr(count_start,count_length-1);
-                            }
-                            count_length++;
-                            break;
-                        }
-                    }
-
-                    stateIDname[stateIndex]=stateName;
-                }
-            }
-        }
-        std_msgs::String msg;
-        msg.data = getGraphFile(prefVizType);
-        graphfile_pub.publish(msg);
-    }
-
-void publishActiveState(string message, ros::Publisher Pub){
+vvoid publishActiveState(string message, ros::Publisher Pub){
         std_msgs::String msg;
         msg.data = message;
         Pub.publish(msg);
@@ -666,106 +594,6 @@ bool getActiveState_service(xdot::getActivateState::Request  &req,
         return true;
     }
 
-bool restartExecution_service(xdot::RequestRestartExecution::Request  &req,
-                              xdot::RequestRestartExecution::Response &res)
-    {
-        initialDispatch();
-        res.success=true;
-        ROS_INFO("sending back response to restart execution:");
-        return true;
-    }
-
-void reloadExecFiles(){
-        xdot::RequestReloadFiles srv;
-        if (client.call(srv)){
-            ROS_INFO("PDDL Executor also reloaded");
-        }
-        else{
-            ROS_INFO("Could not find PDDL Executor services.");
-        }
-    }
-
-void runTerminalCmd(std::string cmd) {
-        FILE *stream;
-        char buffer[1000];
-        stream = popen(cmd.c_str(), "r");
-        while ( fgets(buffer, 1000, stream) != NULL )
-            printf("%s",buffer);
-        pclose(stream);
-        return;
-    }
-
-string doreplacements(string str){
-        std::size_t pit6 = str.find("DOMAINFO");
-        if(pit6!=std::string::npos) str.replace(pit6,8,domainfo_file);
-        std::size_t pit = str.find("DOMAIN");
-        if(pit!=std::string::npos) str.replace(pit,6,domain_file);
-        std::size_t pit2 = str.find("PROBLEM");
-        if(pit2!=std::string::npos) str.replace(pit2,7,problem_file);
-        std::size_t pit3 = str.find("TRANSLATOR");
-        if(pit3!=std::string::npos) str.replace(pit3,10,translator_file);
-        std::size_t pit4 = str.find("POLICY");
-        if(pit4!=std::string::npos) str.replace(pit4,6,policy_file);
-        std::size_t pit5 = str.find("VALIDATOR");
-        if(pit5!=std::string::npos) str.replace(pit5,9,validator_file);
-        std::size_t pit7 = str.find("PLANNER");
-        if(pit7!=std::string::npos) str.replace(pit7,7,planner_path);
-        std::size_t pit8 = str.find("PLANOUT");
-        if(pit8!=std::string::npos) str.replace(pit8,7,execution_files_path);
-        std::size_t pit9 = str.find("SCRIPTS");
-        if(pit9!=std::string::npos) str.replace(pit9,7,script_path);
-        return str;
-
-    }
-
-bool reloadFiles_service(xdot::RequestReloadFiles::Request  &req,
-                         xdot::RequestReloadFiles::Response &res)
-    {
-        string runplanner=doreplacements(planner_command);
-        string translateplan=doreplacements(translator_command);
-        string generateExecFiles=doreplacements(validator_command);
-        string preProGraph=doreplacements(preprograph_command);
-
-
-        struct timeval stop, start;
-        gettimeofday(&start, NULL);
-        ROS_INFO("Running Planner\n %s",runplanner.c_str());
-        runTerminalCmd(runplanner);
-        gettimeofday(&stop, NULL);
-        printf("took %lu\n", stop.tv_usec - start.tv_usec);
-
-        gettimeofday(&start, NULL);
-        ROS_INFO("\nTranslating Plan\n %s",translateplan.c_str());
-        runTerminalCmd(translateplan);
-        gettimeofday(&stop, NULL);
-        printf("took %lu\n", stop.tv_usec - start.tv_usec);
-
-        gettimeofday(&start, NULL);
-        ROS_INFO("Generating Execution Files\n %s",generateExecFiles.c_str());
-        runTerminalCmd(generateExecFiles);
-        gettimeofday(&stop, NULL);
-        printf("took %lu\n", stop.tv_usec - start.tv_usec);
-
-        if (!prefVizType.compare(".pre")){
-            gettimeofday(&start, NULL);
-            ROS_INFO("Preprocessing Graph Representation\n %s",generateExecFiles.c_str());
-            runTerminalCmd(preProGraph);
-            gettimeofday(&stop, NULL);
-            printf("took %lu\n", stop.tv_usec - start.tv_usec);
-        }
-
-        ros::Duration(0.5).sleep(); // sleep for half a second
-        parsePlan();
-        initialDispatch();
-        ros::Duration(0.5).sleep(); // sleep for half a second
-        res.success=true;
-        std_msgs::String msg;
-        msg.data = getGraphFile(prefVizType);
-        graphfile_pub.publish(msg);
-
-        ROS_INFO("sending back response to reload:");
-        return true;
-    }
 
 
 bool graphFile_service(xdot::getGraph::Request  &req,

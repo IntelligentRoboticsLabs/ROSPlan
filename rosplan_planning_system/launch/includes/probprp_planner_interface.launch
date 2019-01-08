@@ -2,8 +2,18 @@
 <launch>
 
 	<!-- arguments -->
-	<arg name="node_name"            default="rosplan_planner_interface" />
-	<arg name="use_problem_topic"    default="true" />
+  <arg name="problem_file" value="$(find xdot)/resources/PDDL/problem.pddl"/>
+  <arg name="domain_file" value="$(find xdot)/resources/PDDL/domain.pddl"/>
+  <arg name="domainfo_file" value="$(find xdot)/resources/PDDL/domainfo.pddl"/>
+  <arg name="planner_path" value="$(find xdot)/planner/proprp/src"/>
+  <arg name="script_path" value="$(find xdot)/planner/proprp/prp-scripts"/>
+  <arg name="translator_file" value="$(find xdot)/planner/proprp/prp-scripts/translate_policy.py"/>
+  <arg name="validator_file" value="$(find xdot)/planner/proprp/prp-scripts/validator.py"/>
+  <arg name="policy_file" value="$(find xdot)/planner/proprp/prp-scripts/human_policy.pol"/>
+  <arg name="execution_files_path" value="$(find xdot)/resources/ExecutionINFO"/>
+
+  <arg name="node_name"            default="rosplan_planner_interface" />
+	<arg name="use_problem_topic"    default="false" />
 	<arg name="problem_topic"        default="/rosplan_problem_interface/problem_instance" />
 	<arg name="planner_topic"        default="planner_output" />
 	<arg name="domain_path"          default="/tmp"/>
@@ -13,36 +23,9 @@
 	<arg name="planner_interface"    default="probprp_planner_interface" />
 
 
-
-  <param name="problem_file" value="$(find xdot)/resources/PDDL/problem.pddl" />
-  <param name="prefVizType" value=".pre" />
-  <param name="domain_file" value="$(find xdot)/resources/PDDL/domain.pddl" />
-  <param name="domainfo_file" value="$(find xdot)/resources/PDDL/domainfo.pddl"/>
-  <param name="planner_path" value="$(find xdot)/planner/proprp/src"/>
-  <param name="script_path" value="$(find xdot)/planner/proprp/prp-scripts"/>
-  <param name="translator_file" value="$(find xdot)/planner/proprp/prp-scripts/translate_policy.py"/>
-  <param name="validator_file" value="$(find xdot)/planner/proprp/prp-scripts/validator.py"/>
-  <param name="policy_file" value="$(find xdot)/planner/proprp/prp-scripts/human_policy.pol"/>
-  <param name="execution_files_path" value="$(find xdot)/resources/ExecutionINFO"/>
-  <!-- to run the planner -->
-  <param name="planner_command" value="(cd $(arg planner_path) ; ./prp $(arg domain_file) $(arg problem_file) --dump-policy 2 --final-fsap-free-round 1 --optimized-scd 1)" />
-  <param name="translator_command" value="(cd $(arg planner_path) ; python $(arg translator_file) > $(arg policy_file))" />
-  <param name="preprograph_command" value="(cd $(arg execution_files_path) ; SCRIPTS/preProcessGraph.py graph.dot graph.pre)" />
-  <param name="validator_command" value="(cd $(arg execution_files_path) ; python $(arg validator_file) $(arg domainfo_file) $(arg problem_file) $(arg policy_file)
-  prp)" />
-
-
-
-
-
-
-
-
-	<!-- planner interface -->
-	<node name="$(arg node_name)" pkg="rosplan_planning_system" type="$(arg planner_interface)" respawn="false" output="screen">
-
-		<!-- general options -->
-		<param name="use_problem_topic" value="$(arg use_problem_topic)" />
+  <!-- planning system -->
+  <node name="$(arg node_name)" pkg="rosplan_planning_system" type="$(arg planner_interface)" respawn="false" output="screen">
+    <param name="use_problem_topic" value="$(arg use_problem_topic)" />
 
 		<!-- ros topics -->
 		<param name="problem_topic" value="$(arg problem_topic)" />
@@ -53,8 +36,24 @@
 		<param name="problem_path" value="$(arg problem_path)" />
 		<param name="data_path" value="$(arg data_path)" />
 
-		<!-- to run the planner -->
-		<param name="planner_command" value="$(arg planner_command)" />
-	</node>
+
+    <!-- directory for generated files -->
+    <param name="problem_file" value="$(arg problem_file)" />
+    <param name="prefVizType" value=".pre" />
+    <param name="domain_file" value="$(arg domain_file)" />
+    <param name="domainfo_file" value="$(arg domainfo_file)"/>
+    <param name="planner_path" value="$(arg planner_path)"/>
+    <param name="script_path" value="$(arg script_path)"/>
+    <param name="translator_file" value="$(arg translator_file)"/>
+    <param name="validator_file" value="$(arg validator_file)"/>
+    <param name="policy_file" value="$(arg policy_file)"/>
+    <param name="execution_files_path" value="$(arg execution_files_path)"/>
+    <!-- to run the planner -->
+    <param name="planner_command" value="(cd $(arg planner_path) ; ./prp $(arg domain_file) $(arg problem_file) --dump-policy 2 --final-fsap-free-round 1 --optimized-scd 1)" />
+    <param name="translator_command" value="(cd $(arg planner_path) ; python $(arg translator_file) > $(arg policy_file))" />
+    <param name="preprograph_command" value="(cd $(arg execution_files_path) ; $(arg script_path)/preProcessGraph.py graph.dot graph.pre)" />
+    <param name="validator_command" value="(cd $(arg execution_files_path) ; python $(arg validator_file) $(arg domainfo_file) $(arg problem_file) $(arg policy_file)
+    prp)" />
+  </node>
 
 </launch>
