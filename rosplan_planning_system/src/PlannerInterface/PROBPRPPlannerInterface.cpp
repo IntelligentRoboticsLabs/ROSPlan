@@ -38,6 +38,7 @@ namespace KCL_rosplan
     std::string plannerTopic = "planner_output";
     node_handle->getParam("planner_topic", plannerTopic);
     // TO DO: Cambiar el tipo de mensaje del publicador del plan
+    // TO DO: Igual es mejor mandar por aqui un plan y además publicar el nuevo mensaje en otro topic
     plan_publisher = node_handle->advertise<std_msgs::String>(plannerTopic, 1, true);
     graphfile_pub = node_handle->advertise<std_msgs::String>("/setGraphFile", 10);
     loadParams();
