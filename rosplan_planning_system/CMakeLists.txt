@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   diagnostic_msgs
   rosplan_dispatch_msgs
   rosplan_knowledge_msgs
+  rosplan_planning_msgs
   roslint
 )
 
@@ -25,7 +26,7 @@ add_compile_options(-std=c++11)
 catkin_package(
   INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
   LIBRARIES rosplan_action_interface
-  CATKIN_DEPENDS roscpp rospy actionlib std_msgs std_srvs diagnostic_msgs rosplan_dispatch_msgs rosplan_knowledge_msgs
+  CATKIN_DEPENDS roscpp rospy actionlib std_msgs std_srvs diagnostic_msgs rosplan_dispatch_msgs rosplan_knowledge_msgs rosplan_planning_msgs
   DEPENDS
 )
 
@@ -66,6 +67,7 @@ add_executable(upm_planner_interface src/PlannerInterface/UPMPlannerInterface.cp
 add_executable(pprp_planner_interface src/PlannerInterface/PPRPPlannerInterface.cpp src/PlannerInterface/PlannerInterface.cpp)
 add_executable(pddl_simple_plan_parser src/PlanParsing/PDDLSimplePlanParser.cpp src/PlanParsing/PlanParser.cpp)
 add_executable(pddl_esterel_plan_parser src/PlanParsing/PDDLEsterelPlanParser.cpp src/PlanParsing/PlanParser.cpp)
+add_executable(pddl_probprp_plan_dispatcher src/PlanDispatch/PROBPRPPlanDispatcher.cpp)
 add_executable(pddl_simple_plan_dispatcher src/PlanDispatch/SimplePlanDispatcher.cpp)
 add_executable(pddl_esterel_plan_dispatcher src/PlanDispatch/EsterelPlanDispatcher.cpp)
 add_executable(simulatedAction src/ActionInterface/RPSimulatedActionInterface.cpp src/ActionInterface/RPActionInterface.cpp)
@@ -85,6 +87,7 @@ add_dependencies(pprp_planner_interface ${catkin_EXPORTED_TARGETS})
 add_dependencies(pddl_simple_plan_parser ${catkin_EXPORTED_TARGETS})
 add_dependencies(pddl_esterel_plan_parser ${catkin_EXPORTED_TARGETS})
 add_dependencies(pddl_simple_plan_dispatcher ${catkin_EXPORTED_TARGETS})
+add_dependencies(pddl_probprp_plan_dispatcher ${catkin_EXPORTED_TARGETS})
 add_dependencies(pddl_esterel_plan_dispatcher ${catkin_EXPORTED_TARGETS})
 add_dependencies(simulatedAction ${catkin_EXPORTED_TARGETS})
 
@@ -103,6 +106,7 @@ target_link_libraries(pprp_planner_interface ${catkin_LIBRARIES})
 target_link_libraries(pddl_simple_plan_parser ${catkin_LIBRARIES})
 target_link_libraries(pddl_esterel_plan_parser ${catkin_LIBRARIES})
 target_link_libraries(pddl_simple_plan_dispatcher ${catkin_LIBRARIES})
+target_link_libraries(pddl_probprp_plan_dispatcher ${catkin_LIBRARIES})
 target_link_libraries(pddl_esterel_plan_dispatcher ${catkin_LIBRARIES})
 target_link_libraries(simulatedAction ${catkin_LIBRARIES})
 
