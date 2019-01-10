@@ -27,7 +27,7 @@ namespace KCL_rosplan {
 		nh.getParam("action_feedback_topic", action_feedback_topic);
 		action_dispatch_publisher = node_handle->advertise<rosplan_dispatch_msgs::ActionDispatch>(action_dispatch_topic, 1, true);
 		action_feedback_publisher = node_handle->advertise<rosplan_dispatch_msgs::ActionFeedback>(action_feedback_topic, 1, true);
-
+    activeStateID = 1, goalState = 2;
 		reset();
 	}
 
@@ -50,46 +50,52 @@ namespace KCL_rosplan {
 	/* Plan subscription */
 	/*-------------------*/
 
-  state_policy_pub = node_handle->advertise<rosplan_planning_msgs::KeyValueIntStrMap>("/probprp/state_policy", 1, true);
-  state_outcome_size_pub = node_handle->advertise<rosplan_planning_msgs::KeyValueIntIntMap>("/probprp/state_outcome_size", 1, true);
-  state_outcome_pub = node_handle->advertise<rosplan_planning_msgs::StateOutcomeMap>("/probprp/state_outcome", 1, true);
-  state_outcome_list_pub = node_handle->advertise<rosplan_planning_msgs::StateOutcomeListMap>("/probprp/state_outcome_list", 1, true);
-
-	void PROBPRPPlanDispatcher::stateIDCallback(const rosplan_planning_msgs::KeyValueIntStrMap id) {
-		/*ROS_INFO("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
-		plan_received = true;
-		mission_start_time = ros::WallTime::now().toSec();
-		current_plan = plan;*/
+	void PROBPRPPlanDispatcher::stateIDCallback(const rosplan_planning_msgs::KeyValueIntStrMap::ConstPtr& id)
+  {
+    ROS_INFO("KCL: (%s) State ID received.", ros::this_node::getName().c_str());
+    std::vector<rosplan_planning_msgs::KeyValueIntStr> id_v = id->map;
+    for (std::vector<rosplan_planning_msgs::KeyValueIntStr>::iterator it = id_v.begin(); it != id_v.end(); ++it)
+      stateIDname[it->key] = it->value;
 	}
 
-  void PROBPRPPlanDispatcher::policyCallback(const rosplan_planning_msgs::KeyValueIntStrMap policy) {
-  /*  ROS_INFO("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
-    plan_received = true;
-    mission_start_time = ros::WallTime::now().toSec();
-    current_plan = plan;*/
+  void PROBPRPPlanDispatcher::policyCallback(const rosplan_planning_msgs::KeyValueIntStrMap::ConstPtr& policy)
+  {
+    ROS_INFO("KCL: (%s) Policy received.", ros::this_node::getName().c_str());
+    std::vector<rosplan_planning_msgs::KeyValueIntStr> policy_v = policy->map;
+    for (std::vector<rosplan_planning_msgs::KeyValueIntStr>::iterator it = policy_v.begin(); it != policy_v.end(); ++it)
+      statePolicy[it->key] = it->value;
   }
 
-  void PROBPRPPlanDispatcher::stateOutSizeCallback(const rosplan_planning_msgs::KeyValueIntIntMap size) {
-		/*ROS_INFO("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
-		plan_received = true;
-		mission_start_time = ros::WallTime::now().toSec();
-		current_plan = plan;*/
+  void PROBPRPPlanDispatcher::stateOutSizeCallback(const rosplan_planning_msgs::KeyValueIntIntMap::ConstPtr& size)
+  {
+    ROS_INFO("KCL: (%s) State outcome size received.", ros::this_node::getName().c_str());
+    std::vector<rosplan_planning_msgs::KeyValueIntInt> size_v = size->map;
+    for (std::vector<rosplan_planning_msgs::KeyValueIntInt>::iterator it = size_v.begin(); it != size_v.end(); ++it)
+      stateOutcomeSize[it->key] = it->value;
 	}
 
-  void PROBPRPPlanDispatcher::stateOutCallback(const rosplan_planning_msgs::StateOutcomeMap outcome) {
-		/*ROS_INFO("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
-		plan_received = true;
-		mission_start_time = ros::WallTime::now().toSec();
-		current_plan = plan;*/
+  void PROBPRPPlanDispatcher::stateOutCallback(const rosplan_planning_msgs::StateOutcomeMap::ConstPtr& outcome)
+  {
+    ROS_INFO("KCL: (%s) State outcome received.", ros::this_node::getName().c_str());
+    std::vector<rosplan_planning_msgs::StateOutcome> outcome_v = outcome->map;
+    for (std::vector<rosplan_planning_msgs::StateOutcome>::iterator it = outcome_v.begin(); it != outcome_v.end(); ++it)
+    {
+      std::pair<int,std::string> key;
+      key.first = it->key.key;
+      key.second = it->key.value;
+      stateOutcome[key] = it->value;
+    }
 	}
 
-  void PROBPRPPlanDispatcher::stateOutListCallback(const rosplan_planning_msgs::StateOutcomeListMap outcome_list) {
-		/*ROS_INFO("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
-		plan_received = true;
-		mission_start_time = ros::WallTime::now().toSec();
-		current_plan = plan;*/
+  void PROBPRPPlanDispatcher::stateOutListCallback(const rosplan_planning_msgs::StateOutcomeListMap::ConstPtr& outcome_list)
+  {
+    ROS_INFO("KCL: (%s) State outcome list received.", ros::this_node::getName().c_str());
+    std::vector<rosplan_planning_msgs::StateOutcomeList> outcome_list_v = outcome_list->map;
+    for (std::vector<rosplan_planning_msgs::StateOutcomeList>::iterator it = outcome_list_v.begin(); it != outcome_list_v.end(); ++it)
+      stateOutcomeList[it->key] = it->value;
 	}
 
+  void PROBPRPPlanDispatcher::planCallback(const rosplan_dispatch_msgs::CompletePlan plan) {}
 
 
 	/*--------------------*/
@@ -114,6 +120,12 @@ namespace KCL_rosplan {
 	/*
 	 * Loop through and publish planned actions
 	 */
+
+   /*  To Do: Al despachar el plan es necesario construir un mensaje de tipo rosplan_dispatch_msgs::ActionDispatch.
+       Este mensaje contiene la acción a ejecutar, con el valor y el tipo de cada parámetro de la accion.
+       Las acciones probabilisticas no se meten en la base de conocimiento, ya que es necesario desarrollar una
+       forma de hacerlo, por ahora rosplan_knowledge_base no lo soporta. 
+   */
 	bool PROBPRPPlanDispatcher::dispatchPlan(double missionStartTime, double planStartTime) {
 
 		ROS_INFO("KCL: (%s) Dispatching plan", ros::this_node::getName().c_str());
@@ -251,10 +263,11 @@ namespace KCL_rosplan {
 	/**
 	 * listen to and process actionFeedback topic.
 	 */
-	void PROBPRPPlanDispatcher::feedbackCallback(const rosplan_dispatch_msgs::ActionFeedback::ConstPtr& msg) {
+	void PROBPRPPlanDispatcher::feedbackPROBPRPCallback(const rosplan_dispatch_msgs::PROBPRPActionFeedback::ConstPtr& msg)
+  {
 
 		// create error if the action is unrecognised
-		ROS_INFO("KCL: (%s) Feedback received [%i, %s]", ros::this_node::getName().c_str(), msg->action_id, msg->status.c_str());
+		/*ROS_INFO("KCL: (%s) Feedback received [%i, %s]", ros::this_node::getName().c_str(), msg->action_id, msg->status.c_str());
 		if(current_action != (unsigned int)msg->action_id)
 			ROS_ERROR("KCL: (%s) Unexpected action ID: %d; current action: %d", ros::this_node::getName().c_str(), msg->action_id, current_action);
 
@@ -270,7 +283,66 @@ namespace KCL_rosplan {
 		if(!action_completed[msg->action_id] && 0 == msg->status.compare("action failed")) {
 			replan_requested = true;
 			action_completed[msg->action_id] = true;
-		}
+		}*/
+
+    std::string currentAction="";
+    std::vector<std::string> currentOutcomes;
+    int currentOutcomeSize=0;
+    std::string activeStateName="";
+
+
+    if (activeStateID==goalState){
+        ROS_WARN("Already in Goal State");
+        //actionServerStatus = "Finished";
+        return;
+    }
+    /*bool failed = false;
+    if (!(msg->succeed)){
+        failed = true;
+        ROS_ERROR(" Negative action feedback");
+    }
+    else if (msg->action_name.compare(currentAction)){
+        failed = true;
+        ROS_ERROR(" Feedback not from expected action");
+    }
+    else if (msg->state_id!=activeStateID){
+        failed = true;
+        ROS_ERROR(" Feedback not from expected state");
+    }
+    if (failed){
+        actionServerStatus = "Out of syncrony";
+        return;
+    }*/
+    ROS_INFO(" Outcome: %s", msg->outcome.c_str());
+    if ( stateOutcome.find(std::pair<int,std::string>(activeStateID,msg->outcome)) == stateOutcome.end() ) {
+        // not found
+        //actionServerStatus = "Outcome Error";
+        //publishAction(activeStateName, activeStateID, "", currentOutcomes, actionDispatch_pub);
+        ROS_INFO("Outcome Error");
+        return;
+    } else {
+        // found
+        activeStateID= stateOutcome[std::pair<int,std::string>(activeStateID,msg->outcome)];
+    }
+
+    if (activeStateID == goalState){
+        ROS_INFO(" Mission Acomplished");
+        //actionServerStatus = "Finished";
+    }
+    activeStateName = stateIDname[activeStateID];
+
+    //publishActiveState(activeStateName, activeState_pub);
+    if (!activeStateName.compare("X")){
+        ROS_INFO(" Dead End");
+        //actionServerStatus = "Dead End Reached";
+    }
+
+
+    currentAction = statePolicy[activeStateID];
+    currentOutcomes= stateOutcomeList[activeStateID];
+    currentOutcomeSize = stateOutcomeSize[activeStateID];
+    //publishAction(activeStateName, activeStateID, currentAction, currentOutcomes, actionDispatch_pub);
+    //ROS_INFO("Status :%s", actionServerStatus.c_str());
 	}
 } // close namespace
 
@@ -292,7 +364,7 @@ namespace KCL_rosplan {
 
 		std::string feedbackTopic = "action_feedback";
 		nh.getParam("action_feedback_topic", feedbackTopic);
-		ros::Subscriber feedback_sub = nh.subscribe(feedbackTopic, 1, &KCL_rosplan::PROBPRPPlanDispatcher::feedbackCallback, &spd);
+		ros::Subscriber feedback_sub = nh.subscribe(feedbackTopic, 1, &KCL_rosplan::PROBPRPPlanDispatcher::feedbackPROBPRPCallback, &spd);
 
 		// start the plan parsing services
 		ros::ServiceServer service1 = nh.advertiseService("dispatch_plan", &KCL_rosplan::PlanDispatcher::dispatchPlanService, dynamic_cast<KCL_rosplan::PlanDispatcher*>(&spd));

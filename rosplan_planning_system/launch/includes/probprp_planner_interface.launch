@@ -16,12 +16,28 @@
 	<arg name="use_problem_topic"    default="false" />
 	<arg name="problem_topic"        default="/rosplan_problem_interface/problem_instance" />
 	<arg name="planner_topic"        default="planner_output" />
-	<arg name="domain_path"          default="/tmp"/>
-	<arg name="problem_path"         default="/tmp" />
+	<arg name="domain_path"          default="$(find xdot)/resources/PDDL/domainfo.pddl"/>
+	<arg name="problem_path"         default="$(find xdot)/resources/PDDL/problem.pddl" />
 	<arg name="data_path"            default="/tmp"/>
 	<arg name="planner_command"      default="timeout 10 $(find rosplan_planning_system)/common/bin/popf $(arg domain_path) $(arg problem_path)" />
 	<arg name="planner_interface"    default="probprp_planner_interface" />
 
+
+  <!-- knowledge base -->
+	<node name="rosplan_knowledge_base" pkg="rosplan_knowledge_base" type="knowledgeBase" respawn="false" output="screen">
+		<param name="domain_path" value="$(arg domain_path)" />
+		<param name="problem_path" value="$(arg problem_path)" />
+		<!-- conditional planning flags -->
+		<param name="use_unknowns" value="false" />
+	</node>
+
+	<!-- problem generation -->
+	<include file="$(find rosplan_planning_system)/launch/includes/problem_interface.launch">
+		<arg name="knowledge_base"   value="rosplan_knowledge_base" />
+		<arg name="domain_path"      value="$(arg domain_path)" />
+		<arg name="problem_path"     value="$(arg problem_path)" />
+		<arg name="problem_topic"    value="problem_instance" />
+	</include>
 
   <!-- planning system -->
   <node name="$(arg node_name)" pkg="rosplan_planning_system" type="$(arg planner_interface)" respawn="false" output="screen">

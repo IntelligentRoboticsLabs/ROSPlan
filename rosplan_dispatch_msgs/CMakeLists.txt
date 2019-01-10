@@ -21,6 +21,7 @@ add_message_files(
    CompletePlan.msg
    ActionDispatch.msg
    ActionFeedback.msg
+   PROBPRPActionFeedback.msg
 )
 
 add_service_files(
