@@ -110,11 +110,28 @@ add_dependencies(rosplan_action_interface ${catkin_EXPORTED_TARGETS})
 ## Install ##
 #############
 
-install(TARGETS rosplan_action_interface simulatedAction
+install(TARGETS
+  rosplan_action_interface
+  simulatedAction
+  problemInterface
+  popf_planner_interface
+  ff_planner_interface
+  metricff_planner_interface
+  smt_planner_interface
+  fd_planner_interface
+  tfd_planner_interface
+  lpg_planner_interface
+  upm_planner_interface
+  pprp_planner_interface
+  pddl_simple_plan_parser
+  pddl_esterel_plan_parser
+  pddl_simple_plan_dispatcher
+  pddl_esterel_plan_dispatcher
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
