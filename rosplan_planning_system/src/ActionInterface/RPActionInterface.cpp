@@ -295,8 +295,8 @@ namespace KCL_rosplan {
 			if(updatePredSrv.request.knowledge.size()>0 && !update_knowledge_client.call(updatePredSrv))
 				ROS_INFO("KCL: (%s) failed to update PDDL model in knowledge base", params.name.c_str());
 		}
-		// call concrete implementation
-		action_success = concreteCallback(msg);
+	    
+		// action_success = concreteCallback(msg); This call the action in duplicate. It is not neccessary, action_success is set in feedback callback.
 		if(action_success) {
 			// update knowledge base
 			rosplan_knowledge_msgs::KnowledgeUpdateServiceArray updatePredSrv;
