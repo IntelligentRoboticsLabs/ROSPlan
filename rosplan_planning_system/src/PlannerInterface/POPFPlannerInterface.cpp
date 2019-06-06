@@ -20,7 +20,7 @@ namespace KCL_rosplan {
 		// start planning action server
 		plan_server->start();
 	}
-	
+
 	POPFPlannerInterface::~POPFPlannerInterface()
 	{
 		delete plan_server;
@@ -51,7 +51,7 @@ namespace KCL_rosplan {
 
 		// save problem to file for POPF
 		if(use_problem_topic && problem_instance_received) {
-			ROS_INFO("KCL: (%s) (%s) Writing problem to file.", ros::this_node::getName().c_str(), problem_name.c_str());
+			ROS_DEBUG("KCL: (%s) (%s) Writing problem to file.", ros::this_node::getName().c_str(), problem_name.c_str());
 			std::ofstream dest;
 			dest.open((problem_path).c_str());
 			dest << problem_instance;
@@ -67,9 +67,9 @@ namespace KCL_rosplan {
 		std::string commandString = str + " > " + data_path + "plan.pddl";
 
 		// call the planer
-		ROS_INFO("KCL: (%s) (%s) Running: %s", ros::this_node::getName().c_str(), problem_name.c_str(),  commandString.c_str());
+		ROS_DEBUG("KCL: (%s) (%s) Running: %s", ros::this_node::getName().c_str(), problem_name.c_str(),  commandString.c_str());
 		std::string plan = runCommand(commandString.c_str());
-		ROS_INFO("KCL: (%s) (%s) Planning complete", ros::this_node::getName().c_str(), problem_name.c_str());
+		ROS_DEBUG("KCL: (%s) (%s) Planning complete", ros::this_node::getName().c_str(), problem_name.c_str());
 
 		// check the planner solved the problem
 		std::ifstream planfile;
@@ -101,8 +101,8 @@ namespace KCL_rosplan {
 		}
 		planfile.close();
 
-		if(!solved) ROS_INFO("KCL: (%s) (%s) Plan was unsolvable.", ros::this_node::getName().c_str(), problem_name.c_str());
-		else ROS_INFO("KCL: (%s) (%s) Plan was solved.", ros::this_node::getName().c_str(), problem_name.c_str());
+		if(!solved) ROS_ERROR("KCL: (%s) (%s) Plan was unsolvable.", ros::this_node::getName().c_str(), problem_name.c_str());
+		else ROS_DEBUG("KCL: (%s) (%s) Plan was solved.", ros::this_node::getName().c_str(), problem_name.c_str());
 
 		return solved;
 	}
@@ -121,7 +121,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh("~");
 
 		KCL_rosplan::POPFPlannerInterface pi(nh);
-		
+
 		// subscribe to problem instance
 		std::string problemTopic = "problem_instance";
 		nh.getParam("problem_topic", problemTopic);

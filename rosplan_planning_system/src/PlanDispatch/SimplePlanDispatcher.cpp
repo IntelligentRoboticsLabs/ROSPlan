@@ -7,7 +7,7 @@ namespace KCL_rosplan {
 	/*-------------*/
 
 	SimplePlanDispatcher::SimplePlanDispatcher(ros::NodeHandle& nh) {
-		
+
 		node_handle = &nh;
 
 		// knowledge base services
@@ -51,7 +51,7 @@ namespace KCL_rosplan {
 	/*-------------------*/
 
 	void SimplePlanDispatcher::planCallback(const rosplan_dispatch_msgs::CompletePlan plan) {
-		ROS_INFO("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
+		ROS_DEBUG("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
 		plan_received = true;
 		mission_start_time = ros::WallTime::now().toSec();
 		current_plan = plan;
@@ -62,7 +62,7 @@ namespace KCL_rosplan {
 	/*--------------------*/
 
 	/**
-	 * plan dispatch service method (1) 
+	 * plan dispatch service method (1)
 	 * dispatches plan as a service
 	 * @returns True iff every action was dispatched and returned success.
 	 */
@@ -119,7 +119,7 @@ namespace KCL_rosplan {
 
 				// dispatch action
 				ROS_INFO("KCL: (%s) Dispatching action [%i, %s, %f, %f]",
-						ros::this_node::getName().c_str(), 
+						ros::this_node::getName().c_str(),
 						currentMessage.action_id,
 						currentMessage.name.c_str(),
 						(currentMessage.dispatch_time+planStartTime-missionStartTime),
@@ -196,7 +196,7 @@ namespace KCL_rosplan {
 
 		// check conditions in knowledge base
 		if (queryKnowledgeClient.call(querySrv)) {
-			
+
 			if(!querySrv.response.all_true) {
 				std::vector<rosplan_knowledge_msgs::KnowledgeItem>::iterator kit;
 				for(kit=querySrv.response.false_knowledge.begin(); kit != querySrv.response.false_knowledge.end(); kit++)
@@ -249,7 +249,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh("~");
 
 		KCL_rosplan::SimplePlanDispatcher spd(nh);
-	
+
 		// subscribe to planner output
 		std::string planTopic = "complete_plan";
 		nh.getParam("plan_topic", planTopic);

@@ -8,7 +8,7 @@ namespace KCL_rosplan {
 	/*-------------*/
 
 	EsterelPlanDispatcher::EsterelPlanDispatcher(ros::NodeHandle& nh) {
-		
+
 		node_handle = &nh;
 
 		// knowledge base services
@@ -57,13 +57,13 @@ namespace KCL_rosplan {
 
 	void EsterelPlanDispatcher::planCallback(const rosplan_dispatch_msgs::EsterelPlan plan) {
 		if(finished_execution) {
-			ROS_INFO("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
+			ROS_DEBUG("KCL: (%s) Plan received.", ros::this_node::getName().c_str());
 			plan_received = true;
 			mission_start_time = ros::WallTime::now().toSec();
 			current_plan = plan;
 			printPlan();
 		} else {
-			ROS_INFO("KCL: (%s) Plan received, but current execution not yet finished.", ros::this_node::getName().c_str());
+			ROS_DEBUG("KCL: (%s) Plan received, but current execution not yet finished.", ros::this_node::getName().c_str());
 		}
 	}
 
@@ -72,7 +72,7 @@ namespace KCL_rosplan {
 	/*--------------------*/
 
 	/**
-	 * plan dispatch service method (1) 
+	 * plan dispatch service method (1)
 	 * dispatches plan as a service
 	 * @returns True iff every action was dispatched and returned success.
 	 */
@@ -92,12 +92,12 @@ namespace KCL_rosplan {
 	 */
 	bool EsterelPlanDispatcher::dispatchPlan(double missionStartTime, double planStartTime) {
 
-		ROS_INFO("KCL: (%s) Dispatching plan.", ros::this_node::getName().c_str());
+		ROS_DEBUG("KCL: (%s) Dispatching plan.", ros::this_node::getName().c_str());
 
 		ros::Rate loop_rate(10);
 		replan_requested = false;
 		plan_cancelled = false;
-		
+
 		// initialise machine
 		initialise();
 
@@ -115,7 +115,7 @@ namespace KCL_rosplan {
 
 			// cancel plan
 			if(plan_cancelled) {
-				ROS_INFO("KCL: (%s) Plan cancelled.", ros::this_node::getName().c_str());
+				ROS_ERROR("KCL: (%s) Plan cancelled.", ros::this_node::getName().c_str());
 				break;
 			}
 
@@ -125,7 +125,7 @@ namespace KCL_rosplan {
 
 			// for each node check completion, conditions, and dispatch
 			for(std::vector<rosplan_dispatch_msgs::EsterelPlanNode>::const_iterator ci = current_plan.nodes.begin(); ci != current_plan.nodes.end(); ci++) {
-				
+
 				rosplan_dispatch_msgs::EsterelPlanNode node = *ci;
 
 				// activate plan start edges
@@ -142,7 +142,7 @@ namespace KCL_rosplan {
 					state_changed = true;
 					plan_started = true;
 				}
-				
+
 				// do not check actions for nodes which are not action nodes
 				if(node.node_type != rosplan_dispatch_msgs::EsterelPlanNode::ACTION_START && node.node_type != rosplan_dispatch_msgs::EsterelPlanNode::ACTION_END)
 					continue;
@@ -167,7 +167,7 @@ namespace KCL_rosplan {
 
 					// query KMS for condition edges
 					bool condition_activate_action = false;
-					if(edges_activate_action) {			
+					if(edges_activate_action) {
 						condition_activate_action = checkPreconditions(node.action);
 					}
 
@@ -179,8 +179,8 @@ namespace KCL_rosplan {
 						action_completed[node.action.action_id] = false;
 
 						// dispatch action
-						ROS_INFO("KCL: (%s) Dispatching action [%i, %s, %f, %f]",
-								ros::this_node::getName().c_str(), 
+						ROS_DEBUG("KCL: (%s) Dispatching action [%i, %s, %f, %f]",
+								ros::this_node::getName().c_str(),
 								node.action.action_id,
 								node.action.name.c_str(),
 								(node.action.dispatch_time+planStartTime-missionStartTime),
@@ -206,7 +206,7 @@ namespace KCL_rosplan {
 				// handle completion of an action
 				if(node.node_type == rosplan_dispatch_msgs::EsterelPlanNode::ACTION_END && action_completed[node.action.action_id]) {
 
-					ROS_INFO("KCL: (%s) %i: action %s completed",
+					ROS_DEBUG("KCL: (%s) %i: action %s completed",
 							ros::this_node::getName().c_str(),
 							node.action.action_id,
 							node.action.name.c_str());
@@ -236,14 +236,14 @@ namespace KCL_rosplan {
 
 			// cancel dispatch on replan
 			if(replan_requested) {
-				ROS_INFO("KCL: (%s) Replan requested.", ros::this_node::getName().c_str());
+				ROS_DEBUG("KCL: (%s) Replan requested.", ros::this_node::getName().c_str());
 				reset();
 				return false;
 			}
 		}
 
-		ROS_INFO("KCL: (%s) Dispatch complete.", ros::this_node::getName().c_str());
-		
+		ROS_DEBUG("KCL: (%s) Dispatch complete.", ros::this_node::getName().c_str());
+
 		reset();
 		return true;
 	}
@@ -308,7 +308,7 @@ namespace KCL_rosplan {
 
 		// check conditions in knowledge base
 		if (query_knowledge_client.call(querySrv)) {
-			
+
 			return querySrv.response.all_true;
 
 		} else {
@@ -325,7 +325,7 @@ namespace KCL_rosplan {
 	 */
 	void EsterelPlanDispatcher::feedbackCallback(const rosplan_dispatch_msgs::ActionFeedback::ConstPtr& msg) {
 
-		ROS_INFO("KCL: (%s) Feedback received [%i, %s]", ros::this_node::getName().c_str(), msg->action_id, msg->status.c_str());
+		ROS_DEBUG("KCL: (%s) Feedback received [%i, %s]", ros::this_node::getName().c_str(), msg->action_id, msg->status.c_str());
 
 		// action enabled
 		if(!action_received[msg->action_id] && (0 == msg->status.compare("action enabled"))) {
@@ -338,7 +338,7 @@ namespace KCL_rosplan {
 
 			// check action is part of current plan
 			if(!action_received[msg->action_id]) {
-				ROS_INFO("KCL: (%s) Action not yet dispatched, ignoring feedback", ros::this_node::getName().c_str());
+				ROS_DEBUG("KCL: (%s) Action not yet dispatched, ignoring feedback", ros::this_node::getName().c_str());
 			}
 			action_completed[msg->action_id] = true;
 			state_changed = true;
@@ -430,7 +430,7 @@ namespace KCL_rosplan {
 		ros::NodeHandle nh("~");
 
 		KCL_rosplan::EsterelPlanDispatcher epd(nh);
-	
+
 		// subscribe to planner output
 		std::string planTopic = "complete_plan";
 		nh.getParam("plan_topic", planTopic);

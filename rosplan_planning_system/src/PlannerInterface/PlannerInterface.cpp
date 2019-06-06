@@ -7,7 +7,7 @@ namespace KCL_rosplan {
 	/*----------------------*/
 
 	void PlannerInterface::problemCallback(const std_msgs::String& problemInstance) {
-		ROS_INFO("KCL: (%s) Problem received.", ros::this_node::getName().c_str());
+		ROS_DEBUG("KCL: (%s) Problem received.", ros::this_node::getName().c_str());
 		problem_instance_received = true;
 		problem_instance_time = ros::WallTime::now().toSec();
 		problem_instance = problemInstance.data;
@@ -18,7 +18,7 @@ namespace KCL_rosplan {
 	/*--------------------*/
 
 	/**
-	 * planning system service method (1) 
+	 * planning system service method (1)
 	 * loads parameters from param server
 	 */
 	bool PlannerInterface::runPlanningServerDefault(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
@@ -43,7 +43,7 @@ namespace KCL_rosplan {
 	}
 
 	/**
-	 * planning system service method (2) 
+	 * planning system service method (2)
 	 * loads parameters from service request
 	 */
 	bool PlannerInterface::runPlanningServerParams(rosplan_dispatch_msgs::PlanningService::Request &req, rosplan_dispatch_msgs::PlanningService::Response &res) {
@@ -53,7 +53,7 @@ namespace KCL_rosplan {
 	}
 
 	/**
-	 * planning system service method (3) 
+	 * planning system service method (3)
 	 * loads parameters from actionlib goal
 	 */
 	void PlannerInterface::runPlanningServerAction(const rosplan_dispatch_msgs::PlanGoalConstPtr& goal) {
@@ -64,7 +64,7 @@ namespace KCL_rosplan {
 			plan_server->setAborted();
 		}
 	}
-	
+
 	/**
 	 * planning system; prepares planning; calls planner; parses plan.
 	 */
@@ -76,7 +76,7 @@ namespace KCL_rosplan {
 		problem_path = problemPath;
 		planner_command = plannerCommand;
 		use_problem_topic = useProblemTopic;
-		
+
 		// set problem name for ROS_INFO
 		std::size_t lastDivide = problem_path.find_last_of("/\\");
 		if(lastDivide != std::string::npos) {
@@ -86,7 +86,7 @@ namespace KCL_rosplan {
 		}
 
 		if(use_problem_topic && !problem_instance_received) {
-			ROS_INFO("KCL: (%s) (%s) Problem was not published yet.", ros::this_node::getName().c_str(), problem_name.c_str());
+			ROS_DEBUG("KCL: (%s) (%s) Problem was not published yet.", ros::this_node::getName().c_str(), problem_name.c_str());
 			return false;
 		}
 

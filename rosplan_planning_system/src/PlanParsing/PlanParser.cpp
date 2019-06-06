@@ -7,7 +7,7 @@ namespace KCL_rosplan {
 	/*----------------------*/
 
 	void PlanParser::plannerCallback(const std_msgs::String& plannerOutput) {
-		ROS_INFO("KCL: (%s) Planner output received.", ros::this_node::getName().c_str());
+		ROS_DEBUG("KCL: (%s) Planner output received.", ros::this_node::getName().c_str());
 		planner_output_received = true;
 		planner_output_time = ros::WallTime::now().toSec();
 		planner_output = plannerOutput.data;
@@ -18,12 +18,12 @@ namespace KCL_rosplan {
 	/*-------------------*/
 
 	/**
-	 * plan parsing service method (1) 
+	 * plan parsing service method (1)
 	 * loads plan from file
 	 */
 	bool PlanParser::parsePlanFromFile(rosplan_dispatch_msgs::ParsingService::Request &req, rosplan_dispatch_msgs::ParsingService::Response &res) {
 
-		ROS_INFO("KCL: (%s) Parsing plan from file.", ros::this_node::getName().c_str());
+		ROS_DEBUG("KCL: (%s) Parsing plan from file.", ros::this_node::getName().c_str());
 
 		reset();
 
@@ -47,19 +47,19 @@ namespace KCL_rosplan {
 	}
 
 	/**
-	 * plan parsing service method (2) 
+	 * plan parsing service method (2)
 	 * parse last plan read
 	 */
 	bool PlanParser::parsePlan(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
 
 		if(planner_output_received) {
-			ROS_INFO("KCL: (%s) Parsing planner output.", ros::this_node::getName().c_str());
+			ROS_DEBUG("KCL: (%s) Parsing planner output.", ros::this_node::getName().c_str());
 			reset();
 			preparePlan();
 			publishPlan();
 			planner_output_received = false;
 		} else {
-			ROS_INFO("KCL: (%s) No new planner output received; nothing to parse.", ros::this_node::getName().c_str());
+			ROS_DEBUG("KCL: (%s) No new planner output received; nothing to parse.", ros::this_node::getName().c_str());
 		}
 		return true;
 	}

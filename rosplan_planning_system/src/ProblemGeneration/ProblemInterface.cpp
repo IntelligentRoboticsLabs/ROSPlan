@@ -121,9 +121,9 @@ namespace KCL_rosplan {
 			problem_name = problem_path;
 		}
 
-		ROS_INFO("KCL: (%s) (%s) Generating problem file.", ros::this_node::getName().c_str(), problem_name.c_str());
+		ROS_DEBUG("KCL: (%s) (%s) Generating problem file.", ros::this_node::getName().c_str(), problem_name.c_str());
 		problem_generator->generateProblemFile(problem_path);
-		ROS_INFO("KCL: (%s) (%s) The problem was generated.", ros::this_node::getName().c_str(), problem_name.c_str());
+		ROS_DEBUG("KCL: (%s) (%s) The problem was generated.", ros::this_node::getName().c_str(), problem_name.c_str());
 
 		// publish problem
 		std::ifstream problemIn(problem_path.c_str());
