@@ -191,7 +191,7 @@ namespace KCL_rosplan {
 		pddl_action_parameters_pub = nh.advertise<rosplan_knowledge_msgs::DomainFormula>(ss.str(), 10, true);
 
 		// create the action feedback publisher
-		std::string aft = "default_feedback_topic";
+		std::string aft = "/rosplan_plan_dispatcher/action_feedback";
 		nh.getParam("action_feedback_topic", aft);
 		action_feedback_pub = nh.advertise<rosplan_dispatch_msgs::ActionFeedback>(aft, 10, true);
 
@@ -204,7 +204,7 @@ namespace KCL_rosplan {
 		ss << "/" << kb << "/query_state";
     query_knowledge_client = nh.serviceClient<rosplan_knowledge_msgs::KnowledgeQueryService>(ss.str());
 		// listen for action dispatch
-		std::string adt = "default_dispatch_topic";
+		std::string adt = "/rosplan_plan_dispatcher/action_dispatch";
 		nh.getParam("action_dispatch_topic", adt);
 		ros::Subscriber ds = nh.subscribe(adt, 1000, &KCL_rosplan::RPActionInterface::dispatchCallback, this);
 
@@ -231,6 +231,7 @@ namespace KCL_rosplan {
 
 		// check action name
 		if(0!=msg->name.compare(params.name)) return;
+
 		ROS_INFO("KCL: (%s) action received", params.name.c_str());
 
 		// check PDDL parameters
@@ -295,7 +296,7 @@ namespace KCL_rosplan {
 			if(updatePredSrv.request.knowledge.size()>0 && !update_knowledge_client.call(updatePredSrv))
 				ROS_INFO("KCL: (%s) failed to update PDDL model in knowledge base", params.name.c_str());
 		}
-	    
+
 		// action_success = concreteCallback(msg); This call the action in duplicate. It is not neccessary, action_success is set in feedback callback.
 		if(action_success) {
 			// update knowledge base
